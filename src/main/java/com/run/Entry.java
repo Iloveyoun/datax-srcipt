@@ -29,20 +29,13 @@ public class Entry {
         where.add2("module_type", paramMap.get("moduleType"), paramMap.get("moduleType") != null);
         where.add2("src_system_id", paramMap.get("srcObjectId"), paramMap.get("srcObjectId") != null);
         where.add2("src_object_name", paramMap.get("srcObjectName"), paramMap.get("srcObjectName") != null);
-//        List<TPubEtlJobs> queryJobs = AfSimpleDB.query(sql + where, TPubEtlJobs.class);
-//        System.out.println("===========");
-//        for (TPubEtlJobs queryJob : queryJobs) {
-//            System.out.println(queryJob);
-//        }
         List<Map> queryJobs = AfSimpleDB.query(sql + where + " ORDER BY job_seq", 0);
-        for (Map queryJob : queryJobs) {
-            System.out.println(queryJob);
+        if (queryJobs.size() == 0) {
+            System.out.println("无可执行JOB信息，程序结束。");
+            return;
         }
-
         // 3、根据配置生成JSON文件并执行
-        if (queryJobs.size() > 0) {
-            createJSONsInit(queryJobs);
-        }
+        createJSONsInit(queryJobs);
     }
 
     /**
@@ -99,7 +92,11 @@ public class Entry {
                 AfSimpleDB.execute(updateSql + whereSql.toString());
 
                 // 执行 JSON文件
-                String cd = "python " + Objects.getConfig().getPythonPath() + " " + jobScriptRunName;
+                String jvm = "";
+                if (AfSqlStringUtils.isNotEmpty(queryJob.get("job_jvm_xms")) && AfSqlStringUtils.isNotEmpty(queryJob.get("job_jvm_xmx"))) {
+                    jvm = String.format("--jvm=\"-Xms%sG -Xmx%sG\"", queryJob.get("job_jvm_xms"), queryJob.get("job_jvm_xmx"));
+                }
+                String cd = "python " + Objects.getConfig().getPythonPath() + " " + jvm + " " + jobScriptRunName;
                 System.out.println("即将执行DataX命令：" + cd);
                 tPubEtlLogs.put("datax_script_name", cd);
                 Map<String, String> run = XShellUtil.run(cd, null);
