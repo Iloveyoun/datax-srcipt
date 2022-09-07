@@ -87,7 +87,7 @@ json --> run[DataX调用json] --> log[记录日志]
 ## 快速启动
 
 - 将带你从零开始搭建一个环境，从而让你快速熟悉`DataX-Script`的使用姿势。
-- liunx：[入门示例]()
+- liunx：[入门示例](https://gitee.com/long-zhangming/datax-script/blob/master/doc/%E5%85%A5%E9%97%A8%E7%A4%BA%E4%BE%8B.md)
 
 
 
