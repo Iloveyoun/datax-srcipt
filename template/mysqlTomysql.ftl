@@ -22,7 +22,7 @@
                   "${src_object_name}"
                 ],
                 "jdbcUrl": [
-                  "jdbc:mysql://132.232.100.207:3310/al_test1"
+                  "jdbc:mysql://127.0.0.1:3306/al_test1"
                 ]
               }
             ],
@@ -46,7 +46,7 @@
             ],
             "connection": [
               {
-                "jdbcUrl": "jdbc:mysql://132.232.100.207:3310/al_test2?useUnicode=true&characterEncoding=utf8",
+                "jdbcUrl": "jdbc:mysql://127.0.0.1:3306/al_test2?useUnicode=true&characterEncoding=utf8",
                 "table": [
                   "${des_object_name}"
                 ]

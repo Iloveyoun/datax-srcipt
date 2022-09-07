@@ -64,7 +64,11 @@ public class XShellUtil {
                         || line.indexOf("任务总计耗时") != -1 || line.indexOf("任务平均流量") != -1 ) {
                     String[] strArray = XStringUtil.getStrArray(line, ":");
                     runingInfo.put(infoKey[i], strArray[1].trim());
+//                    System.out.println(line); // 提取关键日志
                     i ++;
+                }
+                if (line.indexOf("insert INTO %s") != -1) {
+                    runingInfo.put("all_columns", line);
                 }
                 System.out.println(line);
             }

@@ -31,7 +31,7 @@ public class Entry {
         where.add2("src_object_name", paramMap.get("srcObjectName"), paramMap.get("srcObjectName") != null);
         List<Map> queryJobs = AfSimpleDB.query(sql + where + " ORDER BY job_seq", 0);
         if (queryJobs.size() == 0) {
-            System.out.println("无可执行JOB信息，程序结束。");
+            System.out.println("**无可执行JOB信息，程序结束。");
             return;
         }
         // 3、根据配置生成JSON文件并执行
@@ -48,7 +48,7 @@ public class Entry {
         // 参数转换：1 ZZ1 CG7VM1.TMMSM01
         String[] paramName = new String[] {"validFlag", "moduleType", "srcSystemTable"};
         if (args.length > paramName.length) {
-            throw new RuntimeException("参数个数输入有误，请检查后再试！");
+            throw new RuntimeException("**参数个数输入有误，请检查后再试！");
         }
         Map<String, String> paramMap = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
@@ -82,14 +82,13 @@ public class Entry {
             try {
                 // 生成要执行的JSON文件
                 String jobScriptRunName = createJSONINIt(queryJob, MyUtil.getPresentDateTime1()).replace("\\", "/");
-                System.out.println("要执行的JSON文件确认成功为：" + jobScriptRunName);
+                System.out.println("**要执行的JSON文件确认成功为：" + jobScriptRunName);
 
                 // 更新数据库的执行JSON名跟更新时间
                 AfSqlUpdate updateSql = new AfSqlUpdate("t_pub_etl_jobs");
                 updateSql.add("last_update", dataTime);
                 updateSql.add("job_script_run_name", jobScriptRunName);
                 AfSqlWhere whereSql = new AfSqlWhere().add2("job_id", queryJob.get("job_id"));
-                AfSimpleDB.execute(updateSql + whereSql.toString());
 
                 // 执行 JSON文件
                 String jvm = "";
@@ -97,11 +96,20 @@ public class Entry {
                     jvm = String.format("--jvm=\"-Xms%sG -Xmx%sG\"", queryJob.get("job_jvm_xms"), queryJob.get("job_jvm_xmx"));
                 }
                 String cd = "python " + Objects.getConfig().getPythonPath() + " " + jvm + " " + jobScriptRunName;
-                System.out.println("即将执行DataX命令：" + cd);
+                System.out.println("**即将执行DataX命令：" + cd);
                 tPubEtlLogs.put("datax_script_name", cd);
                 Map<String, String> run = XShellUtil.run(cd, null);
-
                 tPubEtlLogs.putAll(run);
+
+                // 更新配置表的cols字段
+                if ("1".equals(queryJob.get("ddl_auto_sync"))) {
+                    if (AfSqlStringUtils.isNotEmpty(run.get("all_columns")) && ("*".equals(queryJob.get("cols")) || !AfSqlStringUtils.isNotEmpty(queryJob.get("cols")))) {
+                        String all_columns = XStringUtil.getStrArray(XStringUtil.getStrArray(run.get("all_columns"), "(")[1], ")")[0];
+                        System.out.println("**触发条件，更新cols，值为：" + all_columns);
+                        updateSql.add("cols", all_columns);
+                    }
+                }
+                AfSimpleDB.execute(updateSql + whereSql.toString());
             } catch (Exception e) {
                 e.printStackTrace();
                 tPubEtlLogs.put("error_1", e.getMessage());
