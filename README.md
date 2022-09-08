@@ -372,7 +372,7 @@ $ java -jar datax-script-1.0.0.jar 1 ZZ1 schema.test
     "job": {
         "setting": {
             "speed": {
-                "channel": 3
+                "channel": ${abc}
             }
         },
         "content": [
