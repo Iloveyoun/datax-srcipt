@@ -2,7 +2,7 @@
 
 DataX非最佳实践。
 
-## 写在前面
+## 一、写在前面
 
 这里主要是说一下为什么要写这个项目。
 
@@ -53,7 +53,7 @@ python {Datax_PATH}/bin/datax.py  {Job_PATH}/job/tab_8.json
 
 
 
-## 基本介绍
+## 二、基本介绍
 
 **能做什么**：
 
@@ -62,7 +62,7 @@ python {Datax_PATH}/bin/datax.py  {Job_PATH}/job/tab_8.json
 - 详细的日志记录，写入到数据库保存。方便查看、迁移。
 - 列自动同步，第一次执行只需要配置“*”，即可自动用目标端的列信息更新配置。
 
-## 软件架构
+## 三、软件架构
 
 - 执行流程图如下（因为我没有图床，本地图片你们看不到，就用这种方式画图了，`git`上可能渲染不了流程图，建议用`Typora`打开即可查看流程图）。
 
@@ -84,24 +84,166 @@ json --> run[DataX调用json] --> log[记录日志]
 
 
 
-## 快速启动
+## 四、快速启动
 
 - 将带你从零开始搭建一个环境，从而让你快速熟悉`DataX-Script`的使用姿势。
 - liunx：[入门示例](https://gitee.com/long-zhangming/datax-script/blob/master/doc/%E5%85%A5%E9%97%A8%E7%A4%BA%E4%BE%8B.md)
 
 
 
-## 使用说明
+## 五、使用说明
 
-### 配置表信息详解
+- 调用方式
 
-每个字段什么意思，有什么作用
+```shell
+# 执行所有，执行所有配置表中有效的配置。
+# 即：valid_flag='1'
+$ java -jar datax-script-1.0.0.jar 1
+
+# 执行批次，执行所有配置表中整个批次下面的配置。
+# 即：valid_flag='1' AND module_type='ZZ1'
+$ java -jar datax-script-1.0.0.jar 1 ZZ1
+
+# 执行单表，不知道怎么描述了。
+# 即：valid_flag='1' AND module_type='ZZ1' AND src_object_name='test' 
+$ java -jar datax-script-1.0.0.jar 1 ZZ1 test
+
+# 对于DB2等表名为Schema.table的可以写成如下
+$ java -jar datax-script-1.0.0.jar 1 ZZ1 schema.test
+```
 
 
 
-### 扩展
+### 5.1 配置表信息详解
+
+> 配置表字段展示
+
+| 列名                     | 注释                                                         |
+| ------------------------ | ------------------------------------------------------------ |
+| job_id                   | 主键id                                                       |
+| job_seq                  | job顺序号                                                    |
+| job_type                 | job类型                                                      |
+| reader_type              | reader类型                                                   |
+| writer_type              | writer类型                                                   |
+| src_system_id            | 源系统Schema                                                 |
+| des_system_id            | 目标系统Schema                                               |
+| src_object_name          | 源系统对象名称                                               |
+| des_object_name          | 目标系统对象名称                                             |
+| src_object_desc          | 源对象描述                                                   |
+| split_pk                 | 切分键                                                       |
+| where                    | where条件                                                    |
+| cols                     | 加载列                                                       |
+| frequency                | 加载频率                                                     |
+| valid_flag               | job是否有效标志                                              |
+| last_update              | 最近更新时刻                                                 |
+| job_name                 | job名称                                                      |
+| module_type              | job模块类型                                                  |
+| job_script_template_name | 生成json文件的模板名称                                       |
+| job_script_run_name      | 要执行的json文件名称                                         |
+| is_create_script         | 是否自动生成脚本::0:每次自动生成，1：job_script_run_name为空时生成 |
+| ddl_auto_sync            | 是否自动更新cols,0:不更新，1:当cols列为空或*时更新           |
+| ddl_specific             | ddl修饰                                                      |
+| cols_cal_def             | 计算/转换列定义                                              |
+| cols_cal_exp             | 计算/转换列表达式                                            |
+| core_byte                | core_byte限速(单channel字节)                                 |
+| job_byte                 | job_byte限速(全局字节)                                       |
+| core_record              | core_record限速(单channel条数)                               |
+| job_record               | job_record限速(全局channel条数)                              |
+| job_channel              | 全局并发                                                     |
+| job_jvm_xms              | JVM堆内存初始大小(G)                                         |
+| job_jvm_xmx              | JVM堆内存最大大小(G)                                         |
+
+> 字段说明
+
+- job_id
+  - 描述：配置的表自增组件
+  - 必选：是
+  - 默认值：无
+- ☆job_seq
+  - 描述：作业执行的顺序，升序。如两条作业，1跟2，先执行1，再执行2。
+  - 必选：是
+  - 默认值：无
+- job_type
+  - 描述：暂无实际意义，可做注释信息。
+  - 必选：否
+  - 默认值：无
+- reader_type
+  - 描述：配合模板使用。使用方式：`${reader_type}`。DataX脚本中reader部分的name。
+  - 必选：否
+  - 默认值：无
+  - 可选值：`oraclereader`、`mysqlreader`、`postgresqlreader`、`rdbmsreader`
+- writer_type
+  - 描述：配合模板使用。使用方式：`${writer_type}`。DataX脚本中writer部分的name。
+  - 必选：否
+  - 默认值：无
+  - 可选值：`oraclewriter`、`mysqlwriter`、`postgresqlwriter`、`rdbmswriter`
+- src_system_id
+  - 描述：源表的`Schema`，对于`DB2`等数据库，表名的表示方式为`schema.table`，此字段可用来存放`schema`，对于`mysql`等，空着就行。
+  - 必选：否
+  - 默认值：无
+- des_system_id
+  - 描述：目标表的`Schema`，对于`DB2`等数据库，表名的表示方式为`schema.table`，此字段可用来存放`schema`，对于`mysql`等，空着就行。
+  - 必选：否
+  - 默认值：无
+- ☆src_object_name
+  - 描述：配合模板使用，使用方式`${src_object_name}`。源表的`table`名。如果上面的`src_system_id`不为空，程序会自动拼凑成`des_system_id.src_object_name`。为空就是`src_object_name`。所以对于`DB2`数据库来说，可以`schama`写在`src_system_id`里，`table`写在这里。也可也直接在这里写`schema.table`。
+  - 必选：否
+  - 默认值：无
+- ☆des_object_name
+  - 描述：配合模板使用，使用方式`${des_object_name}`。目标表的`table`名。如果上面的`des_system_id`不为空，程序会自动拼凑成`des_system_id.des_object_name`。为空就是`des_object_name`。所以对于`DB2`数据库来说，可以`schama`写在`des_system_id`里，`table`写在这里。也可也直接在这里写`schema.table`。
+  - 必选：否
+  - 默认值：无
+- src_object_desc
+  - 描述：要抽取的表的表名描述，暂无实际意义，可做注释信息。
+  - 必选：否
+  - 默认值：无
+- split_pk
+  - 描述：配合模板使用，使用方式`${split_pk}`。DataX脚本中reader部分的splitPk。
+  - 必选：否
+  - 默认值：无
+- ☆where
+  - 描述：配合模板使用，使用方式`${where}`。DataX脚本中reader部分的where。
+  - 必选：否
+  - 默认值：1=1
+- ☆cols
+  - 描述：配合模板使用，使用方式`${cols}`。DataX脚本中reader部分的column。配置成：`id,name,sex`，程序会转换成：`id","name","sex`。所以用的时候要注意。
+  - 必选：否
+  - 默认值：*
+- frequency
+  - 描述：暂无实际意义
+  - 必选：否
+  - 默认值：无
+- ☆valid_flag 
+  - 描述：是否有效标志，对应启动命令`java -jar datax-script.jar 1 ZZ1`中的1，启动命令传入中的第一个参数传入1，就会查询所有此字段为1的配置，然后顺序执行。
+  - 必选：否
+  - 默认值：1
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 5.2 扩展
 
 现在只是关系型数据库，如果其他数据源怎么办，模板怎么写，表怎么扩字段
+
+
+
+
+
+## 六、参与贡献
+
+1.  Fork 本仓库
+2.  新建 Feat_xxx 分支
+3.  提交代码
+4.  新建 Pull Request
 
 
 
@@ -111,11 +253,3 @@ json --> run[DataX调用json] --> log[记录日志]
 
 测试一下，如果源表跟目标表的字段不一样，配置为*，第一次肯定会抽取失败的，测试一下会不会把落地端的字段给更新上去。
 
-
-
-## 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
