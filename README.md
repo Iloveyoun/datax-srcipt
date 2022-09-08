@@ -62,6 +62,8 @@ python {Datax_PATH}/bin/datax.py  {Job_PATH}/job/tab_8.json
 - 详细的日志记录，写入到数据库保存。方便查看、迁移。
 - 列自动同步，第一次执行只需要配置“*”，即可自动用目标端的列信息更新配置。
 
+
+
 ## 三、软件架构
 
 - 执行流程图如下（因为我没有图床，本地图片你们看不到，就用这种方式画图了，`git`上可能渲染不了流程图，建议用`Typora`打开即可查看流程图）。
@@ -116,7 +118,7 @@ $ java -jar datax-script-1.0.0.jar 1 ZZ1 schema.test
 
 ### 5.1 配置表信息详解
 
-> 配置表字段展示
+#### 5.1.1 表字段列表
 
 | 列名                     | 注释                                                         |
 | ------------------------ | ------------------------------------------------------------ |
@@ -153,7 +155,9 @@ $ java -jar datax-script-1.0.0.jar 1 ZZ1 schema.test
 | job_jvm_xms              | JVM堆内存初始大小(G)                                         |
 | job_jvm_xmx              | JVM堆内存最大大小(G)                                         |
 
-> 字段说明
+
+
+#### 5.1.2 字段详解
 
 - job_id
   - 描述：配置的表自增组件
@@ -206,7 +210,7 @@ $ java -jar datax-script-1.0.0.jar 1 ZZ1 schema.test
   - 必选：否
   - 默认值：1=1
 - ☆cols
-  - 描述：配合模板使用，使用方式`${cols}`。DataX脚本中reader部分的column。配置成：`id,name,sex`，程序会转换成：`id","name","sex`。所以用的时候要注意。
+  - 描述：配合模板使用，使用方式`${cols}`。DataX脚本中reader部分的column。注意事项①：配置成：`id,name,sex`，程序会转换成：`id","name","sex`。所以用的时候要注意。注意事项②：当`ddl_auto_sync='1' AND cols IN ('', '*')`的时候，可以自动用目标表的列信息更新配置。
   - 必选：否
   - 默认值：*
 - frequency
@@ -214,27 +218,205 @@ $ java -jar datax-script-1.0.0.jar 1 ZZ1 schema.test
   - 必选：否
   - 默认值：无
 - ☆valid_flag 
-  - 描述：是否有效标志，对应启动命令`java -jar datax-script.jar 1 ZZ1`中的1，启动命令传入中的第一个参数传入1，就会查询所有此字段为1的配置，然后顺序执行。
+  - 描述：配置是否有效标志，对应启动命令`java -jar datax-script.jar 1 ZZ1`中的1，启动命令传入中的第一个参数传入1，就会查询所有此字段为1的配置，然后顺序执行。
   - 必选：否
   - 默认值：1
+- last_update
+  - 描述：配置的执行时间，调用一次更新一次，可查看此配置最近一次调用的时刻。
+  - 必选：否
+  - 默认值：无
+- job_name
+  - 描述：job名称，暂无实际意义，注释信息。
+  - 必选：否
+  - 默认值：无
+- ☆module_type
+  - 描述：job模块类型，对应启动命令`java -jar datax-script.jar 1 ZZ1`中的`ZZ1`，启动命令传入中的第二个参数传入ZZ1，就会查询所有此字段为ZZ1的配置，然后顺序执行。
+  - 必选：否
+  - 默认值：无
+- ☆job_script_template_name
+  - 描述：生成json文件的模板名称。对应`template`目录下的模板文件名。如测试示例配置的是`mysqlTomysql.ftl`。
+  - 必选：否
+  - 默认值：无
+- ☆job_script_run_name
+  - 描述：要执行的JSON文件名称。此名称一般由`job_script_template_name`生成而来。也可以自己指定。
+  - 必选：是
+  - 默认值：无
+- ☆is_create_script
+  - 描述：是否自动生成脚本。0：每次都去请求模板并生成新的JSON文件，1：job_script_run_name为空时生成。推荐设置为1，生成一次后续就一直用它了。如果更改配置，把`job_script_run_name`字段的内容置为空，就能重新生成。
+  - 必选：否
+  - 默认值：无
+- ☆ddl_auto_sync
+  - 描述：是否自动更新`cols`字段，0：不自动更新，1：当`cols`字段为‘ ’ 或‘*’时更新。
+  - 必选：是
+  - 默认值：无
+- ddl_specific
+  - 描述：ddl修饰，暂无实际意义。
+  - 必选：否
+  - 默认值：无
+- cols_cal_def
+  - 描述：计算/转换列定义，暂无实际意义。
+  - 必选：否
+  - 默认值：无
+- cols_cal_exp
+  - 描述：计算/转换列表达式，暂无实际意义。
+  - 必选：否
+  - 默认值：无
+- core_byte
+  - 描述：core_byte限速(单channel字节)。配合模板使用，使用方式`${core_byte}`。
+  - 必选：否
+  - 默认值：无
+- job_byte
+  - 描述：job_byte限速(全局字节)。配合模板使用，使用方式`${job_byte}`。
+  - 必选：否
+  - 默认值：无
+- core_record
+  - 描述：core_record限速(单channel条数)。配合模板使用，使用方式`${core_record}`。
+  - 必选：否
+  - 默认值：无
+- job_record
+  - 描述：job_record限速(全局channel条数)。配合模板使用，使用方式`${job_record}`。
+  - 必选：否
+  - 默认值：无
+- job_channel
+  - 描述：全局并发
+  - 必选：否
+  - 默认值：无
+- job_jvm_xms
+  - 描述：JVM堆内存初始大小(G)，如指定为3，那么执行JSON时生成的命令如：`python .../bin/datax3.py --jvm="-Xms3G -Xmx?G" job/xxx.json`。
+  - 必选：否
+  - 默认值：无
+- job_jvm_xmx
+  - 描述：JVM堆内存最大大小(G)，如指定为3，那么执行JSON时生成的命令如：`python .../bin/datax3.py --jvm="-Xms?G -Xmx3G" job/xxx.json`。
+  - 必选：否
+  - 默认值：无
 
 
 
+#### 5.1.3 template示例
 
+- datax-script的架构很简单，`FreeMarker`的模板+配置表里面的数据=要执行JSON文件，如果你了解`FreeMarker`，那么将非常容易理解，并解锁多种用法，如果不了解，也非常简单，就简单了解成在模板里写`${split_pk}`，就会用配置表里面`split_pk`字段的值对这个字符串做替换。就仅仅只是一个字符串替换而已。下面给出一个示例模板。所有用`${}`表示的特殊符号，都会用配置表同名的字段做字符串替换，从而生成可执行的JSON文件。
 
-
-
-
-
-
+```json
+{
+  "job": {
+    "setting": {
+      "speed": {
+        "channel": ${job_channel}
+      }
+    },
+    "content": [
+      {
+        "reader": {
+          "name": "${reader_type}",
+          "parameter": {
+            "username": "root",
+            "password": "LZM123456",
+            "column": [
+              "${cols}"
+            ],
+            "splitPk": "${split_pk}",
+            "connection": [
+              {
+                "table": [
+                  "${src_object_name}"
+                ],
+                "jdbcUrl": [
+                  "jdbc:mysql://127.0.0.1:3306/al_test1"
+                ]
+              }
+            ],
+            "where": "${where}"
+          }
+        },
+        "writer": {
+          "name": "${writer_type}",
+          "parameter": {
+            "writeMode": "insert",
+            "username": "root",
+            "password": "LZM123456",
+            "column": [
+              "${cols}"
+            ],
+            "session": [
+              "set session sql_mode='ANSI'"
+            ],
+            "preSql": [
+              "delete from ${des_object_name} where ${where}"
+            ],
+            "connection": [
+              {
+                "jdbcUrl": "jdbc:mysql://127.0.0.1:3306/al_test2?useUnicode=true&characterEncoding=utf8",
+                "table": [
+                  "${des_object_name}"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+```
 
 
 
 ### 5.2 扩展
 
-现在只是关系型数据库，如果其他数据源怎么办，模板怎么写，表怎么扩字段
+- 如上所示，配置表里面大部分字段都是为给RDBMS 关系型数据库 使用的，如果要使用其他数据库直接的抽取怎么使用模板自动生成呢？
 
+- 对于其他类型的数据库的模板文件书写方式解决方案，如下是alibaba提供的hdfs的读示例JSON，你还是可以直接把此文件的内容当做一个`FreeMarker`的模板，并同样的用`${xxx}`的方式用配置表里面的字符来替换模板里面的内容，如果配置表的字段语义不够使用，可以随意的增加字段。比如给配置表增加一个`abc`字段，那么在如下的内容中，使用`${abc}`就能用`abc`字段的内容替换模板生成新的`JSON`。
 
+```json
+{
+    "job": {
+        "setting": {
+            "speed": {
+                "channel": 3
+            }
+        },
+        "content": [
+            {
+                "reader": {
+                    "name": "hdfsreader",
+                    "parameter": {
+                        "path": "/user/hive/warehouse/mytable01/*",
+                        "defaultFS": "hdfs://xxx:port",
+                        "column": [
+                               {
+                                "index": 0,
+                                "type": "long"
+                               },
+                               {
+                                "index": 1,
+                                "type": "boolean"
+                               },
+                               {
+                                "type": "string",
+                                "value": "hello"
+                               },
+                               {
+                                "index": 2,
+                                "type": "double"
+                               }
+                        ],
+                        "fileType": "orc",
+                        "encoding": "UTF-8",
+                        "fieldDelimiter": ","
+                    }
+
+                },
+                "writer": {
+                    "name": "streamwriter",
+                    "parameter": {
+                        "print": true
+                    }
+                }
+            }
+        ]
+    }
+}
+```
 
 
 
@@ -245,11 +427,4 @@ $ java -jar datax-script-1.0.0.jar 1 ZZ1 schema.test
 3.  提交代码
 4.  新建 Pull Request
 
-
-
-## 待做事项
-
-可以搞个打印字符画，打印一下 `Datax_script`字符。
-
-测试一下，如果源表跟目标表的字段不一样，配置为*，第一次肯定会抽取失败的，测试一下会不会把落地端的字段给更新上去。
 
