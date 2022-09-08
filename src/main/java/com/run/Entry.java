@@ -19,6 +19,7 @@ import java.util.Map;
 
 public class Entry {
     public static void main(String[] args) throws Exception {
+        XStringUtil.printDataXScript();
         // 1、拿到输入的参数：1 ZZ1 CG8TZ1.TDOBC01
         Map<String, String> paramMap = parametricTransform(args);
 
